@@ -1,81 +1,173 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
+import * as Yup from 'yup';
+import {
+  Form,
+  FieldGroup,
+  Dropdown,
+  DropdownList,
+  DropdownListItem,
+  Button,
+  TextField,
+  Textarea,
+  CheckboxField,
+  Notification
+} from '@contentful/forma-36-react-components';
+import { render } from 'react-dom';
 import PropTypes from 'prop-types';
-import {render} from 'react-dom';
-
-import {init, locations} from 'contentful-ui-extensions-sdk';
+import { css } from 'emotion';
+import { init, locations } from 'contentful-ui-extensions-sdk';
+import tokens from '@contentful/forma-36-tokens';
 import '@contentful/forma-36-react-components/dist/styles.css';
-import '@contentful/forma-36-fcss/dist/styles.css';
-import {Heading, Note, Form, SelectField, Option} from '@contentful/forma-36-react-components';
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/mode/javascript/javascript';
+import './index.css';
+import { FieldComponent } from './FieldComponent';
+import { RichTextEditor } from './components/RickTextEditor';
 
-const DEFAULT_ANIMAL = 'cat';
+const styles = {
+  root: css({
+    minWidth: '400px',
+    maxWidth: '1000px',
+    width: '100%'
+  }),
+  internal: css({
+    padding: tokens.spacing3Xl,
+    paddingTop: tokens.spacingM
+  }),
+  tabs: css({
+    marginBottom: tokens.spacingXl
+  })
+};
 
 init(sdk => {
-  const Component = sdk.location.is(locations.LOCATION_APP_CONFIG) ? Config : AnimalPicture;
+  if (sdk.location.is(locations.LOCATION_ENTRY_EDITOR)) {
+    render(<ArticleEditor sdk={sdk} />, document.getElementById('root'));
+  }
 
-  render(<Component sdk={sdk}/>, document.getElementById('root'));
   sdk.window.startAutoResizer();
 });
 
-const Config = ({sdk}) => {
-  const app = sdk.app;
-  let [parameters, setParameters] = useState(app.getParameters() || {});
-  console.log('Created state');
+const ArticleEditor = ({ sdk }) => {
+  console.log('Rendering ArticleEditor');
+  console.log(sdk);
+  console.log(sdk.contentType);
+  console.log(sdk.contentType.id);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [formDisabled, setFormDisabled] = useState(true);
+  const [fields, setFields] = useState(sdk.entry.fields);
 
+  // display a notification to show that the form is currently in read only mode
   useEffect(() => {
-    app.onConfigure(async () => {
-      console.log('Configuring...');
-      const {items: contentTypes} = await sdk.space.getContentTypes();
-      const contentTypeIds = contentTypes.map(ct => ct.sys.id)
-      console.log('Mapped content types');
-
-      return {
-        parameters: parameters,
-        targetState: {
-          EditorInterface: contentTypeIds.reduce((acc, id) => {
-            console.log(`Modify entry sidebar ${id}`);
-            return {...acc, [id]: {sidebar: {position: 0}}}
-          }, {})
-        }
-      };
-    });
-    console.log('Set up call for app.onConfigure');
+    Notification.warning('Currently in read only mode!', { duration: 5000, canClose: true });
   }, []);
 
-  app.setReady();
+  const checkoutButton = formDisabled ? (
+    <Button
+      buttonType="primary"
+      onClick={() => setFormDisabled(!formDisabled)}
+      onBlur={() => console.log('onBlur')}
+    >
+      Checkout
+    </Button>
+  ) : null;
+
+  const onChange = e => {
+    console.log(e.target.value);
+    console.log(e.target.id);
+    sdk.entry.fields[e.target.id].setValue(e.target.value);
+  };
 
   return (
-    <Form id="app-config">
-      <Heading>Editor Workflow</Heading>
-      <Note noteType="primary" title="About the app">
-        Allow checkout workflow for editors
-      </Note>
-      <SelectField
-        required
-        name="animal-selection"
-        id="animal-selection"
-        labelText="Animal"
-        value={parameters.animal || DEFAULT_ANIMAL}
-        onChange={e => setParameters({animal: e.target.value})}
+    <Form spacing="default">
+      {checkoutButton}
+      <Dropdown
+        isOpen={dropdownOpen && !formDisabled}
+        onClose={() => {
+          if (!formDisabled) setDropdownOpen(false);
+        }}
+        isAutoalignmentEnabled={true}
+        isFullWidth={true}
+        position="bottom-right"
+        toggleElement={
+          <Button
+            size="small"
+            buttonType="muted"
+            onClick={() => setDropdownOpen(true)}
+            indicateDropdown
+          >
+            Pick a bin
+          </Button>
+        }
       >
-        <Option value={DEFAULT_ANIMAL}>Cat</Option>
-        <Option value="dog">Dog</Option>
-        <Option value="owl">Owl</Option>
-      </SelectField>
+        <DropdownList>
+          <DropdownListItem isTitle isDisabled>
+            News
+          </DropdownListItem>
+          <DropdownListItem>news 1</DropdownListItem>
+          <DropdownListItem>news 2</DropdownListItem>
+          <DropdownListItem>news 3</DropdownListItem>
+          <DropdownListItem>news rtg</DropdownListItem>
+          <DropdownListItem isTitle isDisabled>
+            Sports
+          </DropdownListItem>
+          <DropdownListItem>sports 1</DropdownListItem>
+          <DropdownListItem>sports 2</DropdownListItem>
+          <DropdownListItem>sports 3</DropdownListItem>
+          <DropdownListItem>sports rtg</DropdownListItem>
+        </DropdownList>
+      </Dropdown>
+      <TextField
+        required
+        name="title"
+        id="title"
+        labelText="Title"
+        value={sdk.entry.fields['title'].getValue()}
+        helpText="Please enter the title of article"
+        countCharacters
+        textInputProps={{
+          disabled: formDisabled,
+          placeholder: 'Daily Targum is the Best Newspaper',
+          maxLength: 200,
+          rows: 1,
+          type: 'text'
+        }}
+        onChange={onChange}
+      />
+      <TextField
+        required
+        name="slug"
+        id="slug"
+        labelText="Slug"
+        value={sdk.entry.fields['slug'].getValue()}
+        helpText="Please enter the slug of the article"
+        countCharacters
+        textInputProps={{
+          disabled: formDisabled,
+          placeholder: '/daily-targum-is-the-best-newspaper',
+          maxLength: 200,
+          rows: 2,
+          type: 'text'
+        }}
+        onChange={onChange}
+      />
+      <Textarea
+        name="body"
+        id="body"
+        error={false}
+        maxLength={500}
+        required={true}
+        width="full"
+        onChange={() => console.log('onChange')}
+        onBlur={() => console.log('onBlur')}
+        disabled={formDisabled}
+        rows={2}
+        willBlurOnEsc={true}
+      />
+      <RichTextEditor />
     </Form>
   );
-}
-
-function AnimalPicture({sdk}) {
-  const animal = sdk.parameters.installation.animal || DEFAULT_ANIMAL;
-  const src = `https://source.unsplash.com/250x250/?${animal}`;
-
-  return <img alt={animal} id="animal-picture" src={src}/>
-}
-
-AnimalPicture.propTypes = {
-  sdk: PropTypes.any
 };
 
-Config.propTypes = {
+ArticleEditor.propTypes = {
   sdk: PropTypes.any
 };

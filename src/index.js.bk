@@ -1,0 +1,360 @@
+import React, { useState, useEffect } from 'react';
+import { withFormik } from 'formik';
+import * as Yup from 'yup';
+import {
+  Heading,
+  Note,
+  SelectField,
+  Option,
+  Form,
+  FieldGroup,
+  Button,
+  TextField,
+  CheckboxField,
+  Notification
+} from '@contentful/forma-36-react-components';
+import { render } from 'react-dom';
+import PropTypes from 'prop-types';
+import { css } from 'emotion';
+import { init, locations } from 'contentful-ui-extensions-sdk';
+import tokens from '@contentful/forma-36-tokens';
+import { SingleLineEditor } from '@contentful/field-editor-single-line';
+import { MultipleLineEditor } from '@contentful/field-editor-multiple-line';
+import { JsonEditor } from '@contentful/field-editor-json';
+import { NumberEditor } from '@contentful/field-editor-number';
+import { BooleanEditor } from '@contentful/field-editor-boolean';
+import { DropdownEditor } from '@contentful/field-editor-dropdown';
+import { DateEditor } from '@contentful/field-editor-date';
+import '@contentful/forma-36-react-components/dist/styles.css';
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/mode/javascript/javascript';
+import './index.css';
+import { FieldComponent } from './FieldComponent';
+import { LinkEditor } from './LinkEditor';
+
+const DEFAULT_ANIMAL = 'cat';
+
+const styles = {
+  root: css({
+    minWidth: '400px',
+    maxWidth: '1000px',
+    width: '100%'
+  }),
+  internal: css({
+    padding: tokens.spacing3Xl,
+    paddingTop: tokens.spacingM
+  }),
+  tabs: css({
+    marginBottom: tokens.spacingXl
+  })
+};
+
+init(sdk => {
+  if (sdk.location.is(locations.LOCATION_ENTRY_EDITOR)) {
+    //render(<EntryEditor sdk={sdk} />, document.getElementById('root'));
+    render(<ArticleEditor sdk={sdk} />, document.getElementById('root'));
+  } else if (sdk.location.is(locations.LOCATION_APP_CONFIG)) {
+    render(<Config sdk={sdk} />, document.getElementById('root'));
+  }
+
+  sdk.window.startAutoResizer();
+});
+
+const ArticleEditor = ({ sdk }) => {
+  console.log('Rendering ArticleEditor');
+  console.log(sdk);
+  console.log(sdk.contentType);
+  console.log(sdk.contentType.id);
+  useEffect(
+    () => Notification.warning('Currently in read only mode!', { duration: 5000, canClose: true }),
+    []
+  );
+
+  return (
+    <Form onSubmit={() => console.log('onSubmit')} spacing="default">
+      <TextField
+        required
+        name="nameInput"
+        id="nameInput"
+        labelText="Name"
+        value="Johannes Bugiel"
+        helpText="Please enter your name"
+      />
+      <TextField
+        required
+        name="emailInput"
+        id="emailInput"
+        labelText="E-Mail"
+        value="johannes.bugiel@contentful.com"
+        helpText="Please enter your mail"
+      />
+      <FieldGroup row={false}>
+        <CheckboxField
+          labelText="I agree"
+          value="yes"
+          helpText="Click if you agree"
+          onChange={e => console.log('onChange')}
+          checked={false}
+          id="termsCheckboxYes"
+        />
+        <CheckboxField
+          labelText="I don't agree"
+          value="no"
+          onChange={e => console.log('onChange')}
+          checked={false}
+          helpText="Click if you don't agree"
+          id="termsCheckboxNo"
+        />
+      </FieldGroup>
+      <Button>Submit</Button>
+    </Form>
+  );
+};
+
+ArticleEditor.propTypes = {
+  sdk: PropTypes.any
+};
+
+const createFormikEnhancer = sdk => {
+  console.log('START CREATE_FORMIK_ENHANCER');
+  const schema = Yup.object();
+  const shape = {};
+  console.log(sdk.entry.fields);
+  let key;
+  for (key in sdk.entry.fields) {
+    console.log(key);
+    const field = sdk.entry.fields[key];
+    console.log(field);
+    if (field.type == 'Symbol') {
+      shape[key] = Yup.string().max(200, 'Too Long!');
+    } else if (field.type == 'Text') {
+      shape[key] = Yup.string();
+    } else if (field.type == 'Boolean') {
+      shape[key] = Yup.boolean();
+    }
+  }
+  schema.shape(shape);
+  return withFormik({
+    validationSchema: schema,
+    mapPropsToValues: () => {
+      const values = {};
+      let key;
+      for (key in sdk.entry.fields) {
+        console.log(key);
+        const field = sdk.entry.fields[key];
+        console.log(field);
+        values[key] = field.getValue();
+      }
+      return values;
+    },
+    handleSubmit: (values, { setSubmitting }) => {
+      console.log('values');
+      console.log(values);
+      setSubmitting(false);
+    },
+    displayName: 'Custom'
+  });
+};
+
+const MyForm = props => {
+  const { fields, values, touched, errors, handleChange, handleBlur, handleSubmit } = props;
+  console.log('MyForm');
+  console.log(props);
+  console.log(values);
+
+  const formFields = [];
+  let key;
+  for (key in fields) {
+    const field = fields[key];
+    console.log(field);
+    if (field.type == 'Text') {
+      formFields.push(
+        <TextField
+          required
+          key={field.id}
+          name={field.id}
+          id={field.id}
+          labelText={field.id}
+          value={values[key]}
+          onBlur={handleBlur}
+          onChange={handleChange}
+        />
+      );
+    }
+  }
+
+  return (
+    <>
+      <Form onSubmit={handleSubmit} spacing="default">
+        <TextField
+          required
+          name="nameInput"
+          id="nameInput"
+          labelText="Name"
+          value="Johannes Bugiel"
+          helpText="Please enter your name"
+          onBlur={handleBlur}
+          onChange={handleChange}
+        />
+        <TextField
+          required
+          name="emailInput"
+          id="emailInput"
+          labelText="E-Mail"
+          value="johannes.bugiel@contentful.com"
+          helpText="Please enter your mail"
+          onBlur={handleBlur}
+          onChange={handleChange}
+        />
+        <FieldGroup row={false}>
+          <CheckboxField
+            labelText="I agree"
+            value="yes"
+            helpText="Click if you agree"
+            checked={false}
+            id="termsCheckboxYes"
+            onBlur={handleBlur}
+            onChange={handleChange}
+          />
+          <CheckboxField
+            labelText="I don't agree"
+            value="no"
+            checked={false}
+            helpText="Click if you don't agree"
+            id="termsCheckboxNo"
+            onBlur={handleBlur}
+            onChange={handleChange}
+          />
+        </FieldGroup>
+        {formFields}
+        <Button>Submit</Button>
+      </Form>
+    </>
+  );
+};
+
+const EntryEditor = ({ sdk }) => {
+  //const app = sdk.app;
+  const formikEnhancer = createFormikEnhancer(sdk);
+  const EnhancedForm = formikEnhancer(MyForm);
+  console.log(sdk);
+  console.log(sdk.contentType.fields);
+  const renderables = sdk.contentType.fields.map(field => {
+    const result = {
+      id: field.id,
+      name: field.name
+    };
+    if (field.id === 'bin') {
+      result.component = DropdownEditor;
+    } else if (field.type === 'Symbol') {
+      result.component = SingleLineEditor;
+    } else if (field.type === 'Text') {
+      result.component = MultipleLineEditor;
+    } else if (field.type === 'Date') {
+      result.component = DateEditor;
+    } else if (field.type === 'Link') {
+      result.component = LinkEditor;
+    } else if (field.type === 'Object') {
+      result.component = JsonEditor;
+    } else if (field.type === 'Number' || field.type === 'Integer') {
+      result.component = NumberEditor;
+    } else if (field.type === 'Boolean') {
+      result.component = BooleanEditor;
+    } else {
+      result.component = function NotExist() {
+        return <div>widget for {field.type} does not exist</div>;
+      };
+    }
+    return result;
+  });
+
+  const renderField = item => {
+    const field = sdk.entry.fields[item.id];
+    console.log('renderField');
+    console.log(field);
+    const Component = item.component;
+    field.onSchemaErrorsChanged = () => {
+      return () => {};
+    };
+    field.setInvalid = () => {};
+    return (
+      <FieldComponent key={item.id} item={item}>
+        <Component field={field} isInitiallyDisabled={true} sdk={sdk} />
+      </FieldComponent>
+    );
+  };
+
+  return (
+    <div className={styles.root}>
+      <div className={styles.internal}>
+        {/*{renderables.map(item => renderField(item))}*/}
+        <EnhancedForm fields={sdk.entry.fields} />
+      </div>
+    </div>
+  );
+};
+
+EntryEditor.propTypes = {
+  sdk: PropTypes.any
+};
+
+const Config = ({ sdk }) => {
+  const app = sdk.app;
+  let [parameters, setParameters] = useState(app.getParameters() || {});
+  console.log('Created state');
+
+  useEffect(() => {
+    app.onConfigure(async () => {
+      console.log('Configuring...');
+      const { items: contentTypes } = await sdk.space.getContentTypes();
+      const contentTypeIds = contentTypes.map(ct => ct.sys.id);
+      console.log('Mapped content types');
+
+      return {
+        parameters: parameters,
+        targetState: {
+          EditorInterface: contentTypeIds.reduce((acc, id) => {
+            console.log(`Modify entry sidebar ${id}`);
+            return { ...acc, [id]: { sidebar: { position: 0 } } };
+          }, {})
+        }
+      };
+    });
+    console.log('Set up call for app.onConfigure');
+  }, []);
+
+  app.setReady();
+
+  return (
+    <Form id="app-config">
+      <Heading>Editor Workflow</Heading>
+      <Note noteType="primary" title="About the app">
+        Allow checkout workflow for editors
+      </Note>
+      <SelectField
+        required
+        name="animal-selection"
+        id="animal-selection"
+        labelText="Animal"
+        value={parameters.animal || DEFAULT_ANIMAL}
+        onChange={e => setParameters({ animal: e.target.value })}
+      >
+        <Option value={DEFAULT_ANIMAL}>Cat</Option>
+        <Option value="dog">Dog</Option>
+        <Option value="owl">Owl</Option>
+      </SelectField>
+    </Form>
+  );
+};
+
+Config.propTypes = {
+  sdk: PropTypes.any
+};
+/**
+ * By default, iframe of the extension is fully reloaded on every save of a source file.
+ * If you want to use HMR (hot module reload) instead of full reload, uncomment the following lines
+ */
+/*
+if (module.hot) {
+  module.hot.accept();
+}*/
