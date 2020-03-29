@@ -22,7 +22,7 @@ import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/javascript/javascript';
 import './index.css';
 import { FieldComponent } from './FieldComponent';
-import { RichTextEditor } from './components/RickTextEditor';
+import { RichTextEditor } from './components/RichTextEditor';
 
 const styles = {
   root: css({
@@ -51,15 +51,25 @@ const ArticleEditor = ({ sdk }) => {
   console.log('Rendering ArticleEditor');
   console.log(sdk);
   console.log(sdk.contentType);
-  console.log(sdk.contentType.id);
+  console.log(sdk.contentType.sys.id);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [formDisabled, setFormDisabled] = useState(true);
   const [fields, setFields] = useState(sdk.entry.fields);
+  if (sdk.parameters == {}) sdk.parameters.test = ['hello'];
 
   // display a notification to show that the form is currently in read only mode
   useEffect(() => {
     Notification.warning('Currently in read only mode!', { duration: 5000, canClose: true });
+    return function cleanup() {
+      console.log('UNMOUNTING ARTICLE_EDITOR');
+    };
   }, []);
+
+  useEffect(() => {
+    return function cleanup() {
+      console.log('UNMOUNTING ARTICLE_EDITOR');
+    };
+  });
 
   const checkoutButton = formDisabled ? (
     <Button
