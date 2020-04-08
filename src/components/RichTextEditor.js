@@ -12,7 +12,9 @@ const styleMap = {
   }
 };
 
-export const RichTextEditor = () => {
+const RichTextEditor = ({ formDisabled }) => {
+  console.log('INSIDE RICH_TEXT COMPONENT');
+  console.log(formDisabled);
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
   const editor = useRef(null);
   const focus = () => editor.current.focus();
@@ -68,6 +70,7 @@ export const RichTextEditor = () => {
       <InlineStyleControls editorState={editorState} onToggle={toggleInlineStyle} />
       <div className={className} onClick={focus}>
         <Editor
+          readOnly={formDisabled}
           blockStyleFn={getBlockStyle}
           customStyleMap={styleMap}
           editorState={editorState}
@@ -91,10 +94,10 @@ const getBlockStyle = block => {
   }
 };
 
-const StyleButton = ({ _onToggle, style, active, label }) => {
-  const onToggle = e => {
+const StyleButton = ({ onToggle, style, active, label }) => {
+  const onMouseDown = e => {
     e.preventDefault();
-    _onToggle(style);
+    onToggle(style);
   };
 
   let className = 'RichEditor-styleButton';
@@ -103,7 +106,7 @@ const StyleButton = ({ _onToggle, style, active, label }) => {
   }
 
   return (
-    <span className={className} onMouseDown={onToggle}>
+    <span className={className} onMouseDown={onMouseDown}>
       {label}
     </span>
   );
@@ -168,3 +171,5 @@ const InlineStyleControls = ({ editorState, onToggle }) => {
     </div>
   );
 };
+
+export default RichTextEditor;
