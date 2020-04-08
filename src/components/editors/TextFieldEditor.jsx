@@ -3,25 +3,28 @@ import _ from 'lodash-es';
 import { TextField } from '@contentful/forma-36-react-components';
 import PropTypes from 'prop-types';
 
-const TextFieldEditor = ({ field, formDisabled }) => {
+const TextFieldEditor = ({ id, value, onChange, formDisabled }) => {
   return (
     <TextField
       required
-      name={field.id}
-      id={field.id}
-      labelText={_.startCase(field.id)}
-      value={field.getValue()}
+      name={id}
+      id={id}
+      labelText={_.startCase(id)}
+      value={value}
       countCharacters
       textInputProps={{
         disabled: formDisabled,
         type: 'text'
       }}
+      onChange={onChange}
     />
   );
 };
 
 TextFieldEditor.propTypes = {
-  field: PropTypes.object,
+  id: PropTypes.string,
+  value: PropTypes.any,
+  onChange: PropTypes.func,
   formDisabled: PropTypes.bool
 };
 

@@ -9,7 +9,7 @@ import {
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 
-const DropdownEditor = ({ formDisabled }) => {
+const DropdownEditor = ({ id, value, onChange, formDisabled }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   return (
     <Dropdown
@@ -49,6 +49,13 @@ const DropdownEditor = ({ formDisabled }) => {
       </DropdownList>
     </Dropdown>
   );
+};
+
+DropdownEditor.propTypes = {
+  id: PropTypes.string,
+  value: PropTypes.any,
+  onChange: PropTypes.func,
+  formDisabled: PropTypes.bool
 };
 
 export default DropdownEditor;
