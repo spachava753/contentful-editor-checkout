@@ -1,5 +1,4 @@
 import React from 'react';
-import _ from 'lodash-es';
 import { Card } from '@contentful/forma-36-react-components';
 import PropTypes from 'prop-types';
 

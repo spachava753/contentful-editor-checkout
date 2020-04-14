@@ -4,24 +4,19 @@ import PropTypes from 'prop-types';
 import '@contentful/forma-36-react-components/dist/styles.css';
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/javascript/javascript';
-import TextFieldEditor from './editors/TextFieldEditor';
-import DropdownEditor from './editors/DropdownEditor';
+import TextFieldEditor from '../editors/TextFieldEditor';
+import DropdownEditor from '../editors/DropdownEditor';
+import RichTextEditor from '../editors/RichTextEditor';
 import WidgetNotFound from './WidgetNotFound';
 import { useFormik } from 'formik';
-
-const getInitalFromValues = sdk => {
-  const initialValues = {};
-  for (const key in sdk.entry.fields) {
-    initialValues[key] = sdk.entry.fields[key].getValue();
-  }
-  // console.log('initialValues');
-  // console.log(initialValues);
-  return initialValues;
-};
+import { EditorState, ContentState, convertFromHTML } from 'draft-js';
+import _ from 'lodash-es';
+import { documentToHtmlString } from '@contentful/rich-text-html-renderer';
+import { getInitalFromValues } from '../utils/utils';
 
 const ArticleEditor = ({ sdk }) => {
   console.log('Rendering ArticleEditor');
-  // console.log(sdk);
+  console.log(sdk);
   // console.log(sdk.contentType);
   // console.log(sdk.entry);
   const [formDisabled, setFormDisabled] = useState(true);
@@ -30,11 +25,9 @@ const ArticleEditor = ({ sdk }) => {
     onSubmit: values => {
       console.log('onSubmit');
       console.log(values);
-      for (const key in values) {
-        if (values[key]) {
-          sdk.entry.fields[key].setValue(values[key]);
-        }
-      }
+      _.forIn(values, (value, key) => {
+        if (value) sdk.entry.fields[key].setValue(value);
+      });
       setFormDisabled(formDisabled => !formDisabled);
     }
   });
@@ -82,6 +75,18 @@ const ArticleEditor = ({ sdk }) => {
           />
         );
       }
+    } else if (field.type == 'RichText') {
+      console.log(field.validations);
+      console.log(field.validations.some(v => 'in' in v));
+      formFields.push(
+        <RichTextEditor
+          key={key}
+          id={key}
+          value={formik.values[key]}
+          onChange={formik.setFieldValue}
+          formDisabled={formDisabled}
+        />
+      );
     } else {
       formFields.push(<WidgetNotFound key={key} />);
     }

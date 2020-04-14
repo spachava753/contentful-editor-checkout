@@ -43,6 +43,7 @@
     "@contentful/forma-36-fcss": "^0.0.31",
     "@contentful/forma-36-react-components": "^3.22.0",
     "@contentful/forma-36-tokens": "^0.4.5",
+    "@contentful/rich-text-html-renderer": "^13.4.0",
     "contentful-ui-extensions-sdk": "3.10.0",
     "draft-js": "^0.11.5",
     "emotion": "^10.0.27",

@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Editor, EditorState, RichUtils, getDefaultKeyBinding, convertToRaw } from 'draft-js';
-import { css } from 'emotion';
+import React, { useState, useRef } from 'react';
+import { Editor, RichUtils, getDefaultKeyBinding, convertToRaw } from 'draft-js';
 
 // Custom overrides for "code" style.
 const styleMap = {
@@ -12,18 +11,20 @@ const styleMap = {
   }
 };
 
-const RichTextEditor = ({ formDisabled }) => {
+const RichTextEditor = ({ id, value, onChange, formDisabled }) => {
   console.log('INSIDE RICH_TEXT COMPONENT');
+  console.log(id);
+  console.log(value);
   console.log(formDisabled);
-  const [editorState, setEditorState] = useState(EditorState.createEmpty());
+  const editorState = value;
   const editor = useRef(null);
-  const focus = () => editor.current.focus();
-  const onChange = editorState => setEditorState(editorState);
+  console.log(onChange);
+  const onChangeEditorState = editorState => onChange(id, editorState);
 
   const handleKeyCommand = (command, editorState) => {
     const newState = RichUtils.handleKeyCommand(editorState, command);
     if (newState) {
-      onChange(newState);
+      onChangeEditorState(newState);
       return true;
     }
     return false;
@@ -33,7 +34,7 @@ const RichTextEditor = ({ formDisabled }) => {
     if (e.keyCode === 9 /* TAB */) {
       const newEditorState = RichUtils.onTab(e, editorState, 4 /* maxDepth */);
       if (newEditorState !== editorState) {
-        onChange(newEditorState);
+        onChangeEditorState(newEditorState);
       }
       return;
     }
@@ -41,11 +42,11 @@ const RichTextEditor = ({ formDisabled }) => {
   };
 
   const toggleBlockType = blockType => {
-    onChange(RichUtils.toggleBlockType(editorState, blockType));
+    onChangeEditorState(RichUtils.toggleBlockType(editorState, blockType));
   };
 
   const toggleInlineStyle = inlineStyle => {
-    onChange(RichUtils.toggleInlineStyle(editorState, inlineStyle));
+    onChangeEditorState(RichUtils.toggleInlineStyle(editorState, inlineStyle));
   };
 
   // If the user changes block type before entering any text, we can
@@ -68,7 +69,7 @@ const RichTextEditor = ({ formDisabled }) => {
     <div className="RichEditor-root">
       <BlockStyleControls editorState={editorState} onToggle={toggleBlockType} />
       <InlineStyleControls editorState={editorState} onToggle={toggleInlineStyle} />
-      <div className={className} onClick={focus}>
+      <div className={className}>
         <Editor
           readOnly={formDisabled}
           blockStyleFn={getBlockStyle}
@@ -76,7 +77,7 @@ const RichTextEditor = ({ formDisabled }) => {
           editorState={editorState}
           handleKeyCommand={handleKeyCommand}
           keyBindingFn={mapKeyToEditorCommand}
-          onChange={onChange}
+          onChange={onChangeEditorState}
           ref={editor}
           spellCheck={true}
         />

@@ -24,7 +24,7 @@ const DropdownEditor = ({ id, value, onChange, formDisabled }) => {
         <Button
           size="small"
           buttonType="muted"
-          onClick={() => setDropdownOpen(true)}
+          onClick={() => setDropdownOpen(open => !open)}
           indicateDropdown
         >
           Pick a bin
