@@ -9,10 +9,9 @@ import DropdownEditor from '../editors/DropdownEditor';
 import RichTextEditor from '../editors/RichTextEditor';
 import WidgetNotFound from './WidgetNotFound';
 import { useFormik } from 'formik';
-import { EditorState, ContentState, convertFromHTML } from 'draft-js';
 import _ from 'lodash-es';
-import { documentToHtmlString } from '@contentful/rich-text-html-renderer';
-import { getInitalFromValues } from '../utils/utils';
+import { getInitalFromValues, deserializeFromRichText } from '../utils/utils';
+import { convertToRaw } from 'draft-js';
 
 const ArticleEditor = ({ sdk }) => {
   console.log('Rendering ArticleEditor');
@@ -26,7 +25,18 @@ const ArticleEditor = ({ sdk }) => {
       console.log('onSubmit');
       console.log(values);
       _.forIn(values, (value, key) => {
-        if (value) sdk.entry.fields[key].setValue(value);
+        if (value) {
+          if (sdk.entry.fields[key].type == 'RichText') {
+            // value will be editor state
+            deserializeFromRichText(convertToRaw(value.getCurrentContent())).then(val => {
+              console.log('The converted md');
+              console.log(val);
+              sdk.entry.fields[key].setValue(val);
+            });
+          } else {
+            sdk.entry.fields[key].setValue(value);
+          }
+        }
       });
       setFormDisabled(formDisabled => !formDisabled);
     }
