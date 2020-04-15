@@ -16,16 +16,18 @@ const styles = {
   })
 };
 
-export function FieldComponent({ name, children }) {
+const FieldComponent = ({ name, children }) => {
   return (
     <div className={styles.root}>
       <div className={styles.name}>{name}</div>
       {children}
     </div>
   );
-}
+};
 
 FieldComponent.propTypes = {
-  name: PropTypes.object.isRequired,
+  name: PropTypes.string.isRequired,
   children: PropTypes.any
 };
+
+export default FieldComponent;

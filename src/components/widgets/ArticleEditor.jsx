@@ -7,7 +7,10 @@ import 'codemirror/mode/javascript/javascript';
 import TextFieldEditor from '../editors/TextFieldEditor';
 import DropdownEditor from '../editors/DropdownEditor';
 import RichTextEditor from '../editors/RichTextEditor';
+import LinkEditor from '../editors/LinkEditor';
+import SymbolListEditor from '../editors/SymbolListEditor';
 import WidgetNotFound from './WidgetNotFound';
+import FieldComponent from './FieldComponent';
 import { useFormik } from 'formik';
 import _ from 'lodash-es';
 import { getInitalFromValues, deserializeFromRichText } from '../utils/utils';
@@ -17,7 +20,23 @@ const ArticleEditor = ({ sdk }) => {
   console.log('Rendering ArticleEditor');
   console.log(sdk);
   // console.log(sdk.contentType);
-  // console.log(sdk.entry);
+  console.log(sdk.entry);
+  console.log(sdk.entry.fields.authors);
+  console.log(sdk.entry.fields.authors.type);
+  console.log(sdk.entry.fields.authors.getValue());
+  sdk.entry.fields.authors
+    .setValue([
+      {
+        sys: {
+          id: '3yV5fORuD9LaasxZDHb9n8',
+          linkType: 'Entry',
+          type: 'Link'
+        }
+      }
+    ])
+    .then(() => console.log('successful overwrite'))
+    .catch(() => console.log('unsuccessful overwrite'));
+  console.log(sdk.entry.fields.authors.getValue());
   const [formDisabled, setFormDisabled] = useState(true);
   const formik = useFormik({
     initialValues: getInitalFromValues(sdk),
@@ -61,13 +80,13 @@ const ArticleEditor = ({ sdk }) => {
   for (const key in formik.values) {
     //console.log(key);
     const field = sdk.entry.fields[key];
+    let component = <WidgetNotFound />;
     if (field.type == 'Symbol') {
       console.log(field.validations);
       console.log(field.validations.some(v => 'in' in v));
       if (field.validations.some(v => 'in' in v)) {
-        formFields.push(
+        component = (
           <DropdownEditor
-            key={key}
             id={key}
             value={formik.values[key]}
             onChange={formik.handleChange}
@@ -75,9 +94,8 @@ const ArticleEditor = ({ sdk }) => {
           />
         );
       } else {
-        formFields.push(
+        component = (
           <TextFieldEditor
-            key={key}
             id={key}
             value={formik.values[key]}
             onChange={formik.handleChange}
@@ -88,18 +106,44 @@ const ArticleEditor = ({ sdk }) => {
     } else if (field.type == 'RichText') {
       console.log(field.validations);
       console.log(field.validations.some(v => 'in' in v));
-      formFields.push(
+      component = (
         <RichTextEditor
-          key={key}
           id={key}
           value={formik.values[key]}
           onChange={formik.setFieldValue}
           formDisabled={formDisabled}
         />
       );
-    } else {
-      formFields.push(<WidgetNotFound key={key} />);
+    } else if (field.type == 'Array') {
+      console.log(field.type);
+      console.log(field.items);
+      if (field.items.type == 'Link') {
+        component = (
+          <LinkEditor
+            id={key}
+            value={formik.values[key]}
+            items={field.items}
+            onChange={formik.setFieldValue}
+            formDisabled={formDisabled}
+          />
+        );
+      } else if (field.items.type == 'Symbol') {
+        component = (
+          <SymbolListEditor
+            id={key}
+            value={formik.values[key]}
+            onChange={formik.setFieldValue}
+            formDisabled={formDisabled}
+          />
+        );
+      }
     }
+
+    formFields.push(
+      <FieldComponent key={key} name={key}>
+        {component}
+      </FieldComponent>
+    );
   }
 
   return (
