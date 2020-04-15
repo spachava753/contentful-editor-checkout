@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { TextInput, Pill, Form, Button } from '@contentful/forma-36-react-components';
 import CreatableSelect from 'react-select/creatable';
 import PropTypes from 'prop-types';
 

@@ -120,7 +120,7 @@ const ArticleEditor = ({ sdk }) => {
       if (field.items.type == 'Link') {
         component = (
           <LinkEditor
-            id={key}
+            sdk={sdk}
             value={formik.values[key]}
             items={field.items}
             onChange={formik.setFieldValue}
